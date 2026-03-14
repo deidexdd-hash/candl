@@ -19,41 +19,43 @@ export const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 })
 
-const app = Fastify({ logger: true })
+async function main() {
+  const app = Fastify({ logger: true })
 
-await app.register(cors, { origin: '*' })
-await app.register(jwt, { secret: process.env.JWT_SECRET! })
+  await app.register(cors, { origin: '*' })
+  await app.register(jwt, { secret: process.env.JWT_SECRET! })
 
-app.addHook('onRequest', async (request, reply) => {
-  const publicRoutes = [
-    '/v1/auth/telegram',
-    '/v1/payments/stars/webhook',
-    '/v1/payments/stripe/webhook',
-  ]
-  if (publicRoutes.includes(request.url)) return
-  try {
-    await request.jwtVerify()
-  } catch {
-    reply.code(401).send({ error: 'Unauthorized', code: 'UNAUTHORIZED', statusCode: 401 })
-  }
-})
+  app.addHook('onRequest', async (request, reply) => {
+    const publicRoutes = [
+      '/v1/auth/telegram',
+      '/v1/payments/stars/webhook',
+      '/v1/payments/stripe/webhook',
+    ]
+    if (publicRoutes.includes(request.url)) return
+    try {
+      await request.jwtVerify()
+    } catch {
+      reply.code(401).send({ error: 'Unauthorized', code: 'UNAUTHORIZED', statusCode: 401 })
+    }
+  })
 
-const prefix = '/v1'
-await app.register(authRoutes,          { prefix })
-await app.register(userRoutes,          { prefix })
-await app.register(contentRoutes,       { prefix })
-await app.register(candleRoutes,        { prefix })
-await app.register(lunarRoutes,         { prefix })
-await app.register(notificationsRoutes, { prefix })
-await app.register(paymentsRoutes,      { prefix })
+  const prefix = '/v1'
+  await app.register(authRoutes,          { prefix })
+  await app.register(userRoutes,          { prefix })
+  await app.register(contentRoutes,       { prefix })
+  await app.register(candleRoutes,        { prefix })
+  await app.register(lunarRoutes,         { prefix })
+  await app.register(notificationsRoutes, { prefix })
+  await app.register(paymentsRoutes,      { prefix })
 
-startLunarCron()
+  startLunarCron()
 
-const PORT = Number(process.env.PORT) || 3000
-try {
+  const PORT = Number(process.env.PORT) || 3000
   await app.listen({ port: PORT, host: '0.0.0.0' })
   console.log('Backend running on :' + PORT)
-} catch (err) {
-  app.log.error(err)
-  process.exit(1)
 }
+
+main().catch(err => {
+  console.error(err)
+  process.exit(1)
+})
