@@ -1,10 +1,10 @@
 import type { FastifyInstance } from 'fastify'
+import path from 'path'
 import { prisma } from '../index'
-import { hasAccess } from '../middleware/tierGuard'
-import type { Tier } from '@prisma/client'
+import { hasAccess, type Tier } from '../middleware/tierGuard'
 
-const chapters = require('../data/chapters.json')
-const tables   = require('../data/tables.json')
+const chapters = require(path.join(__dirname, '../data/chapters.json'))
+const tables   = require(path.join(__dirname, '../data/tables.json'))
 
 export async function contentRoutes(app: FastifyInstance) {
   app.get('/content/chapters', async (request) => {

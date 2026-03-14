@@ -24,14 +24,10 @@ export function getMoonPhase(date: Date): MoonPhase {
 
 export function getMoonPhaseRu(phase: MoonPhase): string {
   const map: Record<MoonPhase, string> = {
-    new_moon:        'Новолуние',
-    waxing_crescent: 'Растущий серп',
-    first_quarter:   'Первая четверть',
-    waxing_gibbous:  'Растущая Луна',
-    full_moon:       'Полнолуние',
-    waning_gibbous:  'Убывающая Луна',
-    last_quarter:    'Последняя четверть',
-    waning_crescent: 'Убывающий серп',
+    new_moon: 'Новолуние', waxing_crescent: 'Растущий серп',
+    first_quarter: 'Первая четверть', waxing_gibbous: 'Растущая Луна',
+    full_moon: 'Полнолуние', waning_gibbous: 'Убывающая Луна',
+    last_quarter: 'Последняя четверть', waning_crescent: 'Убывающий серп',
   }
   return map[phase]
 }
@@ -58,9 +54,11 @@ const RECOMMENDATIONS: Record<MoonPhase, { candles: string[]; intentions: string
   waning_crescent: { candles: ['Чёрная', 'Белая', 'Серебристая'],  intentions: ['Отдых', 'Подготовка', 'Сны'] },
 }
 
-const LAST_PHASE_KEY = 'lunar:last_phase'
+interface NotificationWithUser {
+  user: { telegramId: bigint; tier: string }
+}
 
-function phaseToDbField(phase: MoonPhase) {
+function phaseToDbField(phase: MoonPhase): string | null {
   if (phase === 'new_moon')  return 'onNewMoon'
   if (phase === 'full_moon') return 'onFullMoon'
   if (['waxing_crescent', 'first_quarter', 'waxing_gibbous'].includes(phase)) return 'onWaxing'
@@ -75,9 +73,9 @@ async function sendLunarNotifications(phase: MoonPhase) {
   const notifications = await prisma.lunarNotification.findMany({
     where: { enabled: true, [dbField]: true },
     include: { user: { select: { telegramId: true, tier: true } } },
-  })
+  }) as NotificationWithUser[]
 
-  const eligible = notifications.filter(n => n.user.tier !== 'free')
+  const eligible = notifications.filter((n: NotificationWithUser) => n.user.tier !== 'free')
   if (eligible.length === 0) return
 
   const text = `🌙 *${getMoonPhaseRu(phase)}*\n\n${PHASE_TIPS[phase]}`
@@ -86,7 +84,7 @@ async function sendLunarNotifications(phase: MoonPhase) {
   const BATCH = 30
   for (let i = 0; i < eligible.length; i += BATCH) {
     await Promise.allSettled(
-      eligible.slice(i, i + BATCH).map(n =>
+      eligible.slice(i, i + BATCH).map((n: NotificationWithUser) =>
         bot.sendMessage(n.user.telegramId.toString(), text, {
           parse_mode: 'Markdown',
           reply_markup: keyboard,
@@ -103,12 +101,10 @@ export function startLunarCron() {
   cron.schedule('0 * * * *', async () => {
     try {
       const phase = getMoonPhase(new Date())
-      // Upstash Redis: get/set через REST API
-      const lastPhase = await redis.get<string>(LAST_PHASE_KEY)
+      const lastPhase = await redis.get<string>('lunar:last_phase')
       if (phase === lastPhase) return
 
-      // TTL 30 дней — защита от повторной отправки
-      await redis.set(LAST_PHASE_KEY, phase, { ex: 60 * 60 * 24 * 30 })
+      await redis.set('lunar:last_phase', phase, { ex: 60 * 60 * 24 * 30 })
 
       const majorPhases: MoonPhase[] = ['new_moon', 'full_moon', 'waxing_gibbous', 'waning_gibbous']
       if (majorPhases.includes(phase)) {
@@ -125,9 +121,7 @@ export function getLunarToday() {
   const now = new Date()
   const phase = getMoonPhase(now)
   const illumination = SunCalc.getMoonIllumination(now)
-  const synodicMonth = 29.53058867
-  const daysUntilFull = Math.round(((0.5 - illumination.phase + 1) % 1) * synodicMonth)
-
+  const daysUntilFull = Math.round(((0.5 - illumination.phase + 1) % 1) * 29.53)
   return {
     phase,
     phaseRu: getMoonPhaseRu(phase),
