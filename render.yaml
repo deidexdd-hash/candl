@@ -3,7 +3,7 @@ services:
     name: yazyk-plameni-api
     env: node
     region: frankfurt
-    plan: starter          # $7/мес — always-on, без засыпания
+    plan: starter
     buildCommand: cd apps/backend && npm install && npx prisma generate && npm run build
     startCommand: cd apps/backend && node dist/index.js
     envVars:
@@ -19,11 +19,11 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: BOT_TOKEN
-        sync: false        # вводить вручную в Render dashboard
+        sync: false
       - key: GEMINI_API_KEY
         sync: false
       - key: TMA_URL
-        sync: false        # https://t.me/YourBot/app
+        sync: false
       - key: NODE_ENV
         value: production
 
@@ -42,13 +42,13 @@ services:
         source: /*
         destination: /index.html
 
+  - type: redis
+    name: yazyk-plameni-redis
+    region: frankfurt
+    plan: starter
+
 databases:
   - name: yazyk-plameni-db
-    plan: free             # Бесплатно первые 90 дней → $7/мес
+    plan: free
     databaseName: yazyk_plameni
-    region: frankfurt
-
-  - name: yazyk-plameni-redis
-    type: redis
-    plan: starter          # $10/мес
     region: frankfurt
