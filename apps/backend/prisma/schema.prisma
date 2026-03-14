@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Tier {
+  free
+  practitioner
+  master
+  annual
+}
+
+enum SubStatus {
+  active
+  cancelled
+  expired
+}
+
+enum PaymentProvider {
+  telegram_stars
+  stripe
+}
+
+model User {
+  id         String   @id @default(uuid())
+  telegramId BigInt   @unique @map("telegram_id")
+  username   String?
+  firstName  String?  @map("first_name")
+  tier       Tier     @default(free)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  subscriptions     Subscription[]
+  purchases         Purchase[]
+  diaryEntries      DiaryEntry[]
+  aiUsage           AiUsage[]
+  candlePicks       CandlePick[]
+  lunarNotification LunarNotification?
+
+  @@map("users")
+}
+
+model Subscription {
+  id         String          @id @default(uuid())
+  userId     String          @map("user_id")
+  tier       Tier
+  status     SubStatus       @default(active)
+  provider   PaymentProvider
+  externalId String?         @map("external_id")
+  startedAt  DateTime        @default(now()) @map("started_at")
+  expiresAt  DateTime        @map("expires_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, status])
+  @@map("subscriptions")
+}
+
+model Purchase {
+  id           String          @id @default(uuid())
+  userId       String          @map("user_id")
+  productKey   String          @map("product_key")
+  amountKopeks Int             @map("amount_kopeks")
+  provider     PaymentProvider
+  externalId   String?         @map("external_id")
+  createdAt    DateTime        @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("purchases")
+}
+
+model DiaryEntry {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  entryDate   DateTime @map("entry_date") @db.Date
+  intention   String
+  candleColor String?  @map("candle_color")
+  oils        String?
+  moonPhase   String?  @map("moon_phase")
+  result      String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, entryDate])
+  @@map("diary_entries")
+}
+
+model AiUsage {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  usageDate  DateTime @map("usage_date") @db.Date
+  count      Int      @default(0)
+  dailyLimit Int      @map("daily_limit")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, usageDate])
+  @@map("ai_usage")
+}
+
+model CandlePick {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  intention String
+  color     String?
+  oil       String?
+  stone     String?
+  moonPhase String?  @map("moon_phase")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("candle_picks")
+}
+
+model LunarNotification {
+  id         String  @id @default(uuid())
+  userId     String  @unique @map("user_id")
+  enabled    Boolean @default(true)
+  onNewMoon  Boolean @default(true) @map("on_new_moon")
+  onFullMoon Boolean @default(true) @map("on_full_moon")
+  onWaxing   Boolean @default(false) @map("on_waxing")
+  onWaning   Boolean @default(false) @map("on_waning")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("lunar_notifications")
+}
+
+// Хранит состояние фоновых задач (вместо Redis)
+model CronState {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("cron_state")
+}
