@@ -30,7 +30,6 @@ services:
   - type: web
     name: yazyk-plameni-frontend
     env: static
-    region: frankfurt
     buildCommand: cd apps/frontend && npm install && npm run build
     staticPublishPath: apps/frontend/dist
     headers:
@@ -46,6 +45,7 @@ services:
     name: yazyk-plameni-redis
     region: frankfurt
     plan: starter
+    ipAllowList: []
 
 databases:
   - name: yazyk-plameni-db
