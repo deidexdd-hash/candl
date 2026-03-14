@@ -25,7 +25,7 @@ services:
         sync: false
       - key: NODE_ENV
         value: production
- 
+
   - type: web
     name: yazyk-plameni-frontend
     env: static
@@ -39,7 +39,7 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
- 
+
 databases:
   - name: yazyk-plameni-db
     plan: free
