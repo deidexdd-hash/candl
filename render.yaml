@@ -4,7 +4,7 @@ services:
     env: node
     region: frankfurt
     plan: free
-    buildCommand: cd apps/backend && npm install --include=dev && npx prisma generate && npm run build
+    buildCommand: cd apps/backend && npm install --include=dev && npx prisma generate && npm run build && npx prisma migrate deploy
     startCommand: cd apps/backend && node dist/index.js
     envVars:
       - key: DATABASE_URL
@@ -25,7 +25,7 @@ services:
         sync: false
       - key: NODE_ENV
         value: production
-
+ 
   - type: web
     name: yazyk-plameni-frontend
     env: static
@@ -39,7 +39,7 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
-
+ 
 databases:
   - name: yazyk-plameni-db
     plan: free
