@@ -28,35 +28,54 @@ export default function App() {
 }
 
 function AppInner() {
-  const { token, isNew, login } = useAuthStore()
+  const { token, login } = useAuthStore()
   const navigate = useNavigate()
 
   useEffect(() => {
     WebApp.ready()
     WebApp.expand()
 
-    // Авторизация при старте
-    if (!token) {
-      fetch(`${import.meta.env.VITE_API_URL}/v1/auth/telegram`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData: WebApp.initData }),
-      })
-        .then(r => r.json())
-        .then(data => {
-          login(data.token, data.user)
-          if (data.user.isNew) navigate('/onboarding')
-          else navigate('/lunar')
-        })
+    if (token) {
+      navigate('/lunar')
+      return
     }
+
+    const initData = WebApp.initData
+
+    // Вне Telegram initData пуст — показываем онбординг без авторизации
+    if (!initData) {
+      navigate('/onboarding')
+      return
+    }
+
+    fetch(`${import.meta.env.VITE_API_URL}/v1/auth/telegram`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ initData }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.token) {
+          login(data.token, data.user)
+          navigate(data.user.isNew ? '/onboarding' : '/lunar')
+        } else {
+          navigate('/onboarding')
+        }
+      })
+      .catch(() => navigate('/onboarding'))
   }, [])
 
-  if (!token) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'var(--tg-theme-text-color)' }}>Загрузка...</div>
-  }
+  const location = useLocation()
+  const hideTabs = location.pathname === '/onboarding' || location.pathname === '/paywall'
 
-  const showTabs = !useLocation().pathname.startsWith('/onboarding')
-    && !useLocation().pathname.startsWith('/paywall')
+  if (!token && WebApp.initData) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center',
+        height: '100vh', color: 'var(--tg-theme-hint-color)', fontSize: 14 }}>
+        Загрузка...
+      </div>
+    )
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
@@ -73,7 +92,7 @@ function AppInner() {
           <Route path="*"           element={<LunarPage />} />
         </Routes>
       </div>
-      {showTabs && <TabBar />}
+      {!hideTabs && <TabBar />}
     </div>
   )
 }
