@@ -7,28 +7,45 @@ const initDataSchema = z.object({
   initData: z.string().min(1),
 })
 
+function getTestUserIds(): bigint[] {
+  const raw = process.env.TEST_USER_IDS ?? ''
+  return raw.split(',').map(s => s.trim()).filter(Boolean).map(s => BigInt(s))
+}
+
+function isTestUser(telegramId: bigint): boolean {
+  return getTestUserIds().some(id => id === telegramId)
+}
+
 export async function authRoutes(app: FastifyInstance) {
   app.post('/auth/telegram', async (request, reply) => {
     const { initData } = initDataSchema.parse(request.body)
 
-    // Верификация Telegram Init Data
     const user = verifyAndParseTelegramInitData(initData, process.env.BOT_TOKEN!)
-    if (!user) return reply.code(401).send({ error: 'Invalid init data', code: 'UNAUTHORIZED', statusCode: 401 })
+    if (!user) {
+      return reply.code(401).send({ error: 'Invalid init data', code: 'UNAUTHORIZED', statusCode: 401 })
+    }
 
-    // Создаём или находим пользователя
-    const isNew = !(await prisma.user.findUnique({ where: { telegramId: BigInt(user.id) } }))
+    const telegramId = BigInt(user.id)
+    const testUser = isTestUser(telegramId)
+
+    const existing = await prisma.user.findUnique({ where: { telegramId } })
+    const isNew = !existing
 
     const dbUser = await prisma.user.upsert({
-      where: { telegramId: BigInt(user.id) },
+      where: { telegramId },
       create: {
-        telegramId: BigInt(user.id),
-        username: user.username ?? null,
+        telegramId,
+        username:  user.username  ?? null,
         firstName: user.first_name ?? null,
-        lunarNotification: { create: {} }, // создаём настройки по умолчанию
+        // Тест-пользователи сразу получают мастер-тариф
+        tier: testUser ? 'master' : 'free',
+        lunarNotification: { create: {} },
       },
       update: {
-        username: user.username ?? null,
+        username:  user.username  ?? null,
         firstName: user.first_name ?? null,
+        // Если уже есть аккаунт и это тест-пользователь — принудительно ставим мастер
+        ...(testUser ? { tier: 'master' } : {}),
       },
     })
 
@@ -37,7 +54,17 @@ export async function authRoutes(app: FastifyInstance) {
       { expiresIn: '30d' }
     )
 
-    return { token, user: { id: dbUser.id, telegramId: dbUser.telegramId.toString(), firstName: dbUser.firstName, tier: dbUser.tier, isNew } }
+    return {
+      token,
+      user: {
+        id:         dbUser.id,
+        telegramId: dbUser.telegramId.toString(),
+        firstName:  dbUser.firstName,
+        tier:       dbUser.tier,
+        isNew,
+        isTestUser: testUser,
+      },
+    }
   })
 }
 

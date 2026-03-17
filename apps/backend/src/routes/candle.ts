@@ -2,27 +2,29 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { prisma } from '../index'
 import { requireTier } from '../middleware/tierGuard'
-import { getMoonPhase } from '../services/lunarService'
+import { getMoonPhase, getMoonPhaseRu } from '../services/lunarService'
 
-// Данные из книги
 const CANDLE_MAP: Record<string, { color: string; oil: string; stone: string }> = {
-  'любовь':                { color: 'Розовая',     oil: 'Жасмин',    stone: 'Сердолик' },
-  'деньги':                { color: 'Зелёная',     oil: 'Апельсин',  stone: 'Гранит' },
-  'защита':                { color: 'Белая',       oil: 'Ладан',     stone: 'Яшма' },
-  'здоровье':              { color: 'Синяя',       oil: 'Ель',       stone: 'Кварц' },
-  'духовность':            { color: 'Фиолетовая',  oil: 'Ладан',     stone: 'Кварц' },
-  'удача':                 { color: 'Оранжевая',   oil: 'Апельсин',  stone: 'Агат' },
-  'карьера':               { color: 'Оранжевая',   oil: 'Гвоздика',  stone: 'Агат' },
-  'очищение':              { color: 'Белая',       oil: 'Полынь',    stone: 'Яшма' },
-  'медитация':             { color: 'Фиолетовая',  oil: 'Ладан',     stone: 'Кварц' },
-  'творчество':            { color: 'Оранжевая',   oil: 'Пачули',    stone: 'Сердолик' },
-  'мир в доме':            { color: 'Голубая',     oil: 'Лаванда',   stone: 'Мрамор' },
-  'финансовое благополучие':{ color: 'Зелёная',    oil: 'Корица',    stone: 'Гранит' },
-  'привлечение любви':     { color: 'Розовая',     oil: 'Жасмин',    stone: 'Сердолик' },
-  'исцеление':             { color: 'Синяя',       oil: 'Лаванда',   stone: 'Кварц' },
-  'победа':                { color: 'Золотая',     oil: 'Мирт',      stone: 'Оникс' },
-  'заземление':            { color: 'Коричневая',  oil: 'Герань',    stone: 'Мрамор' },
-  'интуиция':              { color: 'Серая',       oil: 'Можжевельник', stone: 'Кварц' },
+  'любовь':                 { color: 'Розовая',    oil: 'Жасмин',       stone: 'Сердолик' },
+  'деньги':                 { color: 'Зелёная',    oil: 'Апельсин',     stone: 'Малахит' },
+  'защита':                 { color: 'Белая',      oil: 'Ладан',        stone: 'Яшма' },
+  'здоровье':               { color: 'Синяя',      oil: 'Ель',          stone: 'Кварц' },
+  'духовность':             { color: 'Фиолетовая', oil: 'Ладан',        stone: 'Аметист' },
+  'удача':                  { color: 'Оранжевая',  oil: 'Апельсин',     stone: 'Агат' },
+  'карьера':                { color: 'Оранжевая',  oil: 'Гвоздика',     stone: 'Тигровый глаз' },
+  'очищение':               { color: 'Белая',      oil: 'Полынь',       stone: 'Яшма' },
+  'медитация':              { color: 'Фиолетовая', oil: 'Ладан',        stone: 'Аметист' },
+  'творчество':             { color: 'Оранжевая',  oil: 'Пачули',       stone: 'Сердолик' },
+  'мир в доме':             { color: 'Голубая',    oil: 'Лаванда',      stone: 'Аквамарин' },
+  'финансовое благополучие':{ color: 'Зелёная',    oil: 'Корица',       stone: 'Цитрин' },
+  'привлечение любви':      { color: 'Розовая',    oil: 'Жасмин',       stone: 'Розовый кварц' },
+  'исцеление':              { color: 'Синяя',      oil: 'Лаванда',      stone: 'Кварц' },
+  'победа':                 { color: 'Золотая',    oil: 'Мирт',         stone: 'Цитрин' },
+  'заземление':             { color: 'Коричневая', oil: 'Герань',       stone: 'Яшма' },
+  'интуиция':               { color: 'Синяя',      oil: 'Можжевельник', stone: 'Лазурит' },
+  'сны':                    { color: 'Синяя',      oil: 'Лаванда',      stone: 'Лунный камень' },
+  'предки':                 { color: 'Белая',      oil: 'Мирра',        stone: 'Обсидиан' },
+  'успех':                  { color: 'Золотая',    oil: 'Апельсин',     stone: 'Тигровый глаз' },
 }
 
 const FREE_DAILY_LIMIT = 3
@@ -40,9 +42,8 @@ export async function candleRoutes(app: FastifyInstance) {
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) return reply.code(404).send({ error: 'Not found', code: 'NOT_FOUND', statusCode: 404 })
 
-    // Проверка дневного лимита для free
     if (user.tier === 'free') {
-      const today = new Date(); today.setHours(0,0,0,0)
+      const today = new Date(); today.setHours(0, 0, 0, 0)
       const todayPicks = await prisma.candlePick.count({
         where: { userId, createdAt: { gte: today } }
       })
@@ -57,27 +58,26 @@ export async function candleRoutes(app: FastifyInstance) {
       }
     }
 
-    // Подбор по ключевым словам из намерения
     const intentionLower = intention.toLowerCase()
-    let match = Object.entries(CANDLE_MAP).find(([key]) => intentionLower.includes(key))
+    const match = Object.entries(CANDLE_MAP).find(([key]) => intentionLower.includes(key))
     const result = match ? match[1] : { color: 'Белая', oil: 'Лаванда', stone: 'Кварц' }
-    const currentPhase = moonPhase ?? getMoonPhase(new Date())
 
-    // Сохраняем в историю
-    const pick = await prisma.candlePick.create({
+    const currentPhase = moonPhase ?? getMoonPhase(new Date())
+    const currentPhaseRu = getMoonPhaseRu(currentPhase as any)
+
+    await prisma.candlePick.create({
       data: { userId, intention, ...result, moonPhase: currentPhase }
     })
 
-    // Считаем использование
-    const today = new Date(); today.setHours(0,0,0,0)
+    const today = new Date(); today.setHours(0, 0, 0, 0)
     const usedToday = await prisma.candlePick.count({ where: { userId, createdAt: { gte: today } } })
 
     return {
-      id: pick.id,
       color: result.color,
       oil: result.oil,
       stone: result.stone,
       moonPhase: currentPhase,
+      moonPhaseRu: currentPhaseRu,
       usedToday,
       dailyLimit: user.tier === 'free' ? FREE_DAILY_LIMIT : null,
     }

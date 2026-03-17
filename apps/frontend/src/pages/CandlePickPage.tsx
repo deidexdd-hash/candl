@@ -13,6 +13,7 @@ interface PickResult {
   oil: string
   stone: string
   moonPhase: string
+  moonPhaseRu: string
   usedToday: number
   dailyLimit: number | null
 }
@@ -24,7 +25,7 @@ export function CandlePickPage() {
   const navigate = useNavigate()
   const { isFree } = useTier()
 
-  const { mutate, isPending, error } = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: (intention: string) =>
       api.post<PickResult>('/candle/pick', { intention }),
     onSuccess: setResult,
@@ -44,7 +45,6 @@ export function CandlePickPage() {
         Опишите намерение или выберите из списка
       </p>
 
-      {/* Быстрые варианты */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
         {INTENTIONS.map(i => (
           <button key={i} onClick={() => setIntention(i)} style={{
@@ -57,16 +57,16 @@ export function CandlePickPage() {
         ))}
       </div>
 
-      {/* Произвольный ввод */}
       <textarea
         value={intention}
         onChange={e => setIntention(e.target.value)}
         placeholder="Или напишите своё намерение..."
         style={{
           width: '100%', minHeight: 80, padding: '10px 12px', borderRadius: 10,
-          border: '1px solid var(--tg-theme-hint-color)', background: 'var(--tg-theme-secondary-bg-color)',
-          color: 'var(--tg-theme-text-color)', fontSize: 15, fontFamily: 'inherit',
-          resize: 'none', boxSizing: 'border-box',
+          border: '1px solid var(--tg-theme-hint-color)',
+          background: 'var(--tg-theme-secondary-bg-color)',
+          color: 'var(--tg-theme-text-color)', fontSize: 15,
+          fontFamily: 'inherit', resize: 'none', boxSizing: 'border-box',
         }}
       />
 
@@ -98,13 +98,13 @@ function ResultScreen({ result, onReset, isFree }: { result: PickResult; onReset
     <div style={{ padding: '24px 16px 100px', color: 'var(--tg-theme-text-color)' }}>
       <h2 style={{ marginBottom: 24, fontSize: 20 }}>Ваша свеча</h2>
       {[
-        { label: '🕯 Цвет', value: result.color },
-        { label: '🌿 Масло', value: result.oil },
-        { label: '💎 Камень', value: result.stone },
-        { label: '🌙 Фаза', value: result.moonPhase },
+        { label: '🕯 Цвет',      value: result.color },
+        { label: '🌿 Масло',     value: result.oil },
+        { label: '💎 Камень',    value: result.stone },
+        { label: '🌙 Фаза Луны', value: result.moonPhaseRu },
       ].map(row => (
         <div key={row.label} style={{
-          display: 'flex', justifyContent: 'space-between',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           padding: '12px 0', borderBottom: '0.5px solid var(--tg-theme-hint-color)',
         }}>
           <span style={{ color: 'var(--tg-theme-hint-color)', fontSize: 14 }}>{row.label}</span>
