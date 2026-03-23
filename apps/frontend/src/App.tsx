@@ -28,27 +28,26 @@ export default function App() {
 }
 
 function AppInner() {
-  const { token, login } = useAuthStore()
+  const { token, login, updateTier } = useAuthStore()
   const navigate = useNavigate()
 
   useEffect(() => {
     WebApp.ready()
     WebApp.expand()
 
-    if (token) {
-      navigate('/lunar')
-      return
-    }
-
     const initData = WebApp.initData
 
-    // Вне Telegram initData пуст — показываем онбординг без авторизации
     if (!initData) {
+      // Вне Telegram — онбординг без авторизации
       navigate('/onboarding')
       return
     }
 
-    fetch(`${import.meta.env.VITE_API_URL}/v1/auth/telegram`, {
+    const API = import.meta.env.VITE_API_URL
+
+    // Всегда делаем свежую авторизацию при каждом открытии
+    // Это гарантирует актуальный tier (в т.ч. после активации тест-режима)
+    fetch(`${API}/v1/auth/telegram`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ initData }),
@@ -57,17 +56,24 @@ function AppInner() {
       .then(data => {
         if (data.token) {
           login(data.token, data.user)
+          // Принудительно обновляем tier из свежего ответа
+          updateTier(data.user.tier)
           navigate(data.user.isNew ? '/onboarding' : '/lunar')
         } else {
           navigate('/onboarding')
         }
       })
-      .catch(() => navigate('/onboarding'))
+      .catch(() => {
+        // Если нет сети — используем кэш
+        if (token) navigate('/lunar')
+        else navigate('/onboarding')
+      })
   }, [])
 
   const location = useLocation()
   const hideTabs = location.pathname === '/onboarding' || location.pathname === '/paywall'
 
+  // Показываем загрузку только пока initData есть и токена нет
   if (!token && WebApp.initData) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center',
@@ -81,15 +87,15 @@ function AppInner() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <Routes>
-          <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/lunar"      element={<LunarPage />} />
-          <Route path="/pick"       element={<CandlePickPage />} />
-          <Route path="/library"    element={<LibraryPage />} />
+          <Route path="/onboarding"  element={<OnboardingPage />} />
+          <Route path="/lunar"       element={<LunarPage />} />
+          <Route path="/pick"        element={<CandlePickPage />} />
+          <Route path="/library"     element={<LibraryPage />} />
           <Route path="/library/:id" element={<LibraryPage />} />
-          <Route path="/diary"      element={<DiaryPage />} />
-          <Route path="/profile"    element={<ProfilePage />} />
-          <Route path="/paywall"    element={<PaywallPage />} />
-          <Route path="*"           element={<LunarPage />} />
+          <Route path="/diary"       element={<DiaryPage />} />
+          <Route path="/profile"     element={<ProfilePage />} />
+          <Route path="/paywall"     element={<PaywallPage />} />
+          <Route path="*"            element={<LunarPage />} />
         </Routes>
       </div>
       {!hideTabs && <TabBar />}
