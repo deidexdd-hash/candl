@@ -11,6 +11,7 @@ import { candleRoutes } from './routes/candle'
 import { lunarRoutes, notificationsRoutes } from './routes/lunar'
 import { paymentsRoutes } from './routes/payments'
 import { startLunarCron } from './services/lunarService'
+import { setupBot } from './services/botSetup'
 
 export const prisma = new PrismaClient()
 
@@ -53,6 +54,9 @@ async function main() {
   const PORT = Number(process.env.PORT) || 3000
   await app.listen({ port: PORT, host: '0.0.0.0' })
   console.log('Backend running on :' + PORT)
+
+  // Настраиваем бота после старта сервера
+  await setupBot()
 }
 
 main().catch(err => {
