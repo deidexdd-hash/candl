@@ -20,19 +20,13 @@ const PHASE_EMOJI: Record<string, string> = {
 export function LunarPage() {
   const api = useApi()
   const navigate = useNavigate()
-  const { data, isLoading, isError } = useQuery<LunarData>({
+  const { data, isLoading } = useQuery<LunarData>({
     queryKey: ['lunar-today'],
     queryFn: () => api.get('/lunar/today'),
     staleTime: 60 * 60 * 1000, // 1 час
   })
 
   if (isLoading) return <PageLoader />
-  if (isError || !data) return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center',
-      height: '60vh', color: 'var(--tg-theme-hint-color)', fontSize: 14, textAlign: 'center', padding: '0 24px' }}>
-      Не удалось загрузить данные.<br />Проверьте соединение и попробуйте ещё раз.
-    </div>
-  )
 
   const emoji = PHASE_EMOJI[data!.phase] ?? '🌙'
   const illuminationPct = Math.round(data!.illumination * 100)

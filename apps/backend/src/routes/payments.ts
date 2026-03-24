@@ -2,7 +2,6 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import TelegramBot from 'node-telegram-bot-api'
 import { prisma } from '../index'
-import { handleBotUpdate } from '../services/botSetup'
 
 const bot = new TelegramBot(process.env.BOT_TOKEN!, { polling: false })
 
@@ -27,7 +26,7 @@ export async function paymentsRoutes(app: FastifyInstance) {
       productKey.replace(/_/g, ' '),
       'Язык Пламени — доступ к контенту',
       JSON.stringify({ userId, productKey }),
-      '',
+      '',       // providerToken — пустая строка для Telegram Stars
       'XTR',
       [{ label: productKey, amount: product.stars }]
     )
@@ -35,30 +34,16 @@ export async function paymentsRoutes(app: FastifyInstance) {
     return { invoiceLink: invoice }
   })
 
-  // Единый вебхук — обрабатывает и платежи, и команды (/start, /help)
   app.post('/payments/stars/webhook', async (request) => {
     const body = request.body as any
-
-    // Сначала пробуем обработать как сообщение бота (/start, /help и т.д.)
-    await handleBotUpdate(body)
-
-    // Затем — платёж
     const message = body?.message
+
     if (message?.successful_payment) {
       const payment = message.successful_payment
-
-      let payload: { userId: string; productKey: string }
-      try {
-        payload = JSON.parse(payment.invoice_payload)
-      } catch {
-        return { ok: true }
-      }
-
-      const { userId, productKey } = payload
+      const { userId, productKey } = JSON.parse(payment.invoice_payload)
       const product = PRODUCTS[productKey]
-      if (!product) return { ok: true }
 
-      if (product.tier) {
+      if (product?.tier) {
         const expiresAt = new Date()
         expiresAt.setMonth(expiresAt.getMonth() + 1)
 
@@ -83,7 +68,7 @@ export async function paymentsRoutes(app: FastifyInstance) {
             }
           })
         ])
-      } else if (product.productKey) {
+      } else if (product?.productKey) {
         await prisma.purchase.create({
           data: {
             userId,
