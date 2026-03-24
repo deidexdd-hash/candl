@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import WebApp from '@twa-dev/sdk'
@@ -30,6 +30,9 @@ export default function App() {
 function AppInner() {
   const { token, login, updateTier } = useAuthStore()
   const navigate = useNavigate()
+  // ФИКС: явный флаг — не полагаемся на !token для показа лоадера.
+  // Когда auth падает, token остаётся null, но isAuthenticating должен стать false.
+  const [isAuthenticating, setIsAuthenticating] = useState(!!WebApp.initData)
 
   useEffect(() => {
     WebApp.ready()
@@ -40,6 +43,7 @@ function AppInner() {
     if (!initData) {
       // Вне Telegram — онбординг без авторизации
       navigate('/onboarding')
+      setIsAuthenticating(false)
       return
     }
 
@@ -68,13 +72,16 @@ function AppInner() {
         if (token) navigate('/lunar')
         else navigate('/onboarding')
       })
+      .finally(() => {
+        setIsAuthenticating(false)
+      })
   }, [])
 
   const location = useLocation()
   const hideTabs = location.pathname === '/onboarding' || location.pathname === '/paywall'
 
-  // Показываем загрузку только пока initData есть и токена нет
-  if (!token && WebApp.initData) {
+  // ФИКС: показываем загрузку только пока запрос авторизации в процессе
+  if (isAuthenticating) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center',
         height: '100vh', color: 'var(--tg-theme-hint-color)', fontSize: 14 }}>

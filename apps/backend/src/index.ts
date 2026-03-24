@@ -56,7 +56,12 @@ async function main() {
   console.log('Backend running on :' + PORT)
 
   // Настраиваем бота после старта сервера
-  await setupBot()
+  // ФИКС: try/catch — ошибка бота не должна убивать процесс
+  try {
+    await setupBot()
+  } catch (err) {
+    console.error('[bot] Ошибка при настройке бота (сервер продолжает работу):', err)
+  }
 }
 
 main().catch(err => {
