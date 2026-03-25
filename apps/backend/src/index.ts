@@ -8,9 +8,10 @@ import { authRoutes } from './routes/auth'
 import { userRoutes } from './routes/users'
 import { contentRoutes } from './routes/content'
 import { candleRoutes } from './routes/candle'
-import { lunarRoutes, notificationsRoutes } from './routes/lunar'
+import { lunarRoutes, notificationsRoutes, diaryRoutes } from './routes/lunar'
 import { paymentsRoutes } from './routes/payments'
 import { startLunarCron } from './services/lunarService'
+import { setupBot } from './services/botSetup'
 
 export const prisma = new PrismaClient()
 
@@ -30,6 +31,7 @@ async function main() {
       '/v1/auth/telegram',
       '/v1/payments/stars/webhook',
       '/v1/payments/stripe/webhook',
+      '/v1/payments/robokassa/webhook',
     ]
     if (publicRoutes.includes(request.url)) return
     try {
@@ -46,6 +48,7 @@ async function main() {
   await app.register(candleRoutes,        { prefix })
   await app.register(lunarRoutes,         { prefix })
   await app.register(notificationsRoutes, { prefix })
+  await app.register(diaryRoutes,         { prefix })
   await app.register(paymentsRoutes,      { prefix })
 
   startLunarCron()
@@ -53,6 +56,8 @@ async function main() {
   const PORT = Number(process.env.PORT) || 3000
   await app.listen({ port: PORT, host: '0.0.0.0' })
   console.log('Backend running on :' + PORT)
+
+  await setupBot()
 }
 
 main().catch(err => {
