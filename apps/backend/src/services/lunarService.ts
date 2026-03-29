@@ -1,10 +1,16 @@
 import cron from 'node-cron'
 import SunCalc from 'suncalc'
 import TelegramBot from 'node-telegram-bot-api'
-import { prisma, redis } from '../index'
+import { prisma } from '../index'
 
-const bot = new TelegramBot(process.env.BOT_TOKEN!, { polling: false })
-const TMA_URL = process.env.TMA_URL!
+// Bot инициализируется лениво, чтобы не падать при старте если BOT_TOKEN не задан
+function getBot(): TelegramBot | null {
+  const token = process.env.BOT_TOKEN
+  if (!token) return null
+  return new TelegramBot(token, { polling: false })
+}
+
+const TMA_URL = process.env.TMA_URL ?? ''
 
 export type MoonPhase =
   | 'new_moon' | 'waxing_crescent' | 'first_quarter' | 'waxing_gibbous'
@@ -70,6 +76,12 @@ async function sendLunarNotifications(phase: MoonPhase) {
   const dbField = phaseToDbField(phase)
   if (!dbField) return
 
+  const bot = getBot()
+  if (!bot || !TMA_URL) {
+    console.warn('[lunar] BOT_TOKEN или TMA_URL не заданы — уведомления пропущены')
+    return
+  }
+
   const notifications = await prisma.lunarNotification.findMany({
     where: { enabled: true, [dbField]: true },
     include: { user: { select: { telegramId: true, tier: true } } },
@@ -101,10 +113,18 @@ export function startLunarCron() {
   cron.schedule('0 * * * *', async () => {
     try {
       const phase = getMoonPhase(new Date())
-      const lastPhase = await redis.get<string>('lunar:last_phase')
+
+      // Читаем последнюю фазу из БД (CronState) вместо Redis
+      const cronState = await prisma.cronState.findUnique({ where: { key: 'lunar:last_phase' } })
+      const lastPhase = cronState?.value ?? null
+
       if (phase === lastPhase) return
 
-      await redis.set('lunar:last_phase', phase, { ex: 60 * 60 * 24 * 30 })
+      await prisma.cronState.upsert({
+        where:  { key: 'lunar:last_phase' },
+        create: { key: 'lunar:last_phase', value: phase },
+        update: { value: phase },
+      })
 
       const majorPhases: MoonPhase[] = ['new_moon', 'full_moon', 'waxing_gibbous', 'waning_gibbous']
       if (majorPhases.includes(phase)) {

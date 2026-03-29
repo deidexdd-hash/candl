@@ -2,7 +2,6 @@ import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
 import { PrismaClient } from '@prisma/client'
-import { Redis } from '@upstash/redis'
 
 import { authRoutes }       from './routes/auth'
 import { userRoutes }       from './routes/users'
@@ -16,11 +15,6 @@ import { startLunarCron }   from './services/lunarService'
 import { setupBot }         from './services/botSetup'
 
 export const prisma = new PrismaClient()
-
-export const redis = new Redis({
-  url:   process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-})
 
 async function main() {
   const app = Fastify({ logger: true })

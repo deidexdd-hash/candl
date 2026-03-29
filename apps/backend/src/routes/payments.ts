@@ -4,7 +4,12 @@ import TelegramBot from 'node-telegram-bot-api'
 import { prisma } from '../index'
 import { handleBotUpdate } from '../services/botSetup'
 
-const bot = new TelegramBot(process.env.BOT_TOKEN!, { polling: false })
+// Lazy — не падаем при старте если BOT_TOKEN не задан
+function getBot(): TelegramBot {
+  const token = process.env.BOT_TOKEN
+  if (!token) throw new Error('BOT_TOKEN не задан')
+  return new TelegramBot(token, { polling: false })
+}
 
 const PRODUCTS: Record<string, { stars: number; tier?: string; productKey?: string }> = {
   subscription_practitioner_monthly: { stars: 230, tier: 'practitioner' },
@@ -23,7 +28,7 @@ export async function paymentsRoutes(app: FastifyInstance) {
     const product = PRODUCTS[productKey]
     if (!product) return reply.code(404).send({ error: 'Unknown product', code: 'NOT_FOUND', statusCode: 404 })
 
-    const invoice = await bot.createInvoiceLink(
+    const invoice = await getBot().createInvoiceLink(
       productKey.replace(/_/g, ' '),
       'Язык Пламени — доступ к контенту',
       JSON.stringify({ userId, productKey }),
