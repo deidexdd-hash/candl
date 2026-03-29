@@ -4,14 +4,16 @@ import jwt from '@fastify/jwt'
 import { PrismaClient } from '@prisma/client'
 import { Redis } from '@upstash/redis'
 
-import { authRoutes } from './routes/auth'
-import { userRoutes } from './routes/users'
-import { contentRoutes } from './routes/content'
-import { candleRoutes } from './routes/candle'
+import { authRoutes }       from './routes/auth'
+import { userRoutes }       from './routes/users'
+import { contentRoutes }    from './routes/content'
+import { candleRoutes }     from './routes/candle'
 import { lunarRoutes, notificationsRoutes, diaryRoutes } from './routes/lunar'
-import { paymentsRoutes } from './routes/payments'
-import { startLunarCron } from './services/lunarService'
-import { setupBot } from './services/botSetup'
+import { paymentsRoutes }   from './routes/payments'
+import { adminRoutes }      from './routes/admin'
+import { accessCodeRoutes } from './routes/accessCode'
+import { startLunarCron }   from './services/lunarService'
+import { setupBot }         from './services/botSetup'
 
 export const prisma = new PrismaClient()
 
@@ -31,9 +33,12 @@ async function main() {
       '/v1/auth/telegram',
       '/v1/payments/stars/webhook',
       '/v1/payments/stripe/webhook',
-      '/v1/payments/robokassa/webhook',
     ]
+    // Публичные роуты — без JWT
     if (publicRoutes.includes(request.url)) return
+    // Админ-роуты защищены своим заголовком, не JWT
+    if (request.url.startsWith('/v1/admin')) return
+
     try {
       await request.jwtVerify()
     } catch {
@@ -50,6 +55,8 @@ async function main() {
   await app.register(notificationsRoutes, { prefix })
   await app.register(diaryRoutes,         { prefix })
   await app.register(paymentsRoutes,      { prefix })
+  await app.register(adminRoutes,         { prefix })
+  await app.register(accessCodeRoutes,    { prefix })
 
   startLunarCron()
 

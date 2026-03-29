@@ -143,3 +143,17 @@ model CronState {
 
   @@map("cron_state")
 }
+
+model AccessCode {
+  id        String    @id @default(uuid())
+  code      String    @unique
+  tier      Tier
+  label     String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  expiresAt DateTime? @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  usedBy    String?   @map("used_by")
+
+  @@index([code])
+  @@map("access_codes")
+}

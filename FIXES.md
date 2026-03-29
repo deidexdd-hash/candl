@@ -186,3 +186,97 @@ POST /auth/telegram
 - **Аварийный таймер** — через 25 сек: принудительно идём на онбординг
 - **Фоновое обновление tier** — если токен есть, контент показывается сразу, auth тихо в фоне
 - **Видимый loading screen** — свеча 🕯 + текст в `text-color` (не hint-color)
+
+---
+
+## Задача 7 — Двухуровневая авторизация по кодам ✅ v22
+
+### Что добавлено
+
+**База данных** — новая таблица `access_codes`:
+- `code` — уникальный код формата `XXXX-XXXX-XXXX`
+- `tier` — уровень доступа: `practitioner` или `master`
+- `label` — пометка администратора (например «Для Марии»)
+- `expiresAt` — срок действия (опционально)
+- `usedAt` / `usedBy` — кем и когда использован
+
+**Backend — Admin API** (`/v1/admin/*`, защита через `X-Admin-Secret`):
+
+| Метод | Путь | Действие |
+|---|---|---|
+| POST | /admin/codes | Создать один код |
+| POST | /admin/codes/batch | Создать N кодов сразу |
+| GET | /admin/codes | Список всех кодов (фильтры: tier, used) |
+| DELETE | /admin/codes/:code | Удалить неиспользованный код |
+| GET | /admin/stats | Статистика пользователей по тарифам |
+
+**Backend — User API** (`/v1/access/*`, требует JWT):
+
+| Метод | Путь | Действие |
+|---|---|---|
+| POST | /access/activate | Активировать код → обновить tier |
+| GET | /access/check/:code | Проверить код без активации |
+
+**Frontend** — `ProfilePage.tsx`:
+- Поле ввода кода `XXXX-XXXX-XXXX` (авто-uppercase)
+- Валидация и понятные сообщения об ошибках
+- Показывает текущий тариф с описанием
+
+**Защита**:
+- Код нельзя использовать дважды
+- Код не может «понизить» тариф
+- Истёкшие коды отклоняются
+- Admin API защищён отдельным секретом (не JWT)
+
+### Новая переменная окружения
+
+```
+ADMIN_SECRET = придумать длинный секрет (например uuid)
+```
+
+Добавить в Render → Environment.
+
+### Как создавать коды (curl)
+
+```bash
+# Один код уровня Практик
+curl -X POST https://yazyk-plameni-api.onrender.com/v1/admin/codes \
+  -H "X-Admin-Secret: ВАШ_СЕКРЕТ" \
+  -H "Content-Type: application/json" \
+  -d '{"tier": "practitioner", "label": "Для Марии"}'
+
+# Один код уровня Мастер с датой истечения
+curl -X POST https://yazyk-plameni-api.onrender.com/v1/admin/codes \
+  -H "X-Admin-Secret: ВАШ_СЕКРЕТ" \
+  -H "Content-Type: application/json" \
+  -d '{"tier": "master", "label": "Тест-группа", "expiresAt": "2026-12-31T23:59:59Z"}'
+
+# Сразу 5 кодов Практик
+curl -X POST https://yazyk-plameni-api.onrender.com/v1/admin/codes/batch \
+  -H "X-Admin-Secret: ВАШ_СЕКРЕТ" \
+  -H "Content-Type: application/json" \
+  -d '{"tier": "practitioner", "count": 5}'
+
+# Список всех кодов
+curl https://yazyk-plameni-api.onrender.com/v1/admin/codes \
+  -H "X-Admin-Secret: ВАШ_СЕКРЕТ"
+
+# Статистика пользователей
+curl https://yazyk-plameni-api.onrender.com/v1/admin/stats \
+  -H "X-Admin-Secret: ВАШ_СЕКРЕТ"
+```
+
+### Пример ответа при создании кода
+
+```json
+{
+  "code": "FIRE-MOON-2024",
+  "tier": "practitioner",
+  "label": "Для Марии",
+  "expiresAt": null,
+  "createdAt": "2026-03-29T12:00:00Z"
+}
+```
+
+Этот код передаёшь пользователю в личном сообщении.
+Пользователь вводит его в Профиле → тариф обновляется мгновенно.
