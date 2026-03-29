@@ -28,17 +28,20 @@ export function LunarPage() {
 
   if (isLoading) return <PageLoader />
 
-  const emoji = PHASE_EMOJI[data!.phase] ?? '🌙'
-  const illuminationPct = Math.round(data!.illumination * 100)
+  // Бэкенд недоступен (спит, ошибка сети) — заглушка вместо краша
+  if (!data) return <ErrorScreen />
+
+  const emoji = PHASE_EMOJI[data.phase] ?? '🌙'
+  const illuminationPct = Math.round(data.illumination * 100)
 
   return (
     <div style={{ padding: '24px 16px 100px', color: 'var(--tg-theme-text-color)' }}>
       {/* Фаза */}
       <div style={{ textAlign: 'center', marginBottom: 28 }}>
         <div style={{ fontSize: 72, lineHeight: 1, marginBottom: 10 }}>{emoji}</div>
-        <h1 style={{ margin: '0 0 4px', fontSize: 24, fontWeight: 600 }}>{data!.phaseRu}</h1>
+        <h1 style={{ margin: '0 0 4px', fontSize: 24, fontWeight: 600 }}>{data.phaseRu}</h1>
         <p style={{ margin: 0, color: 'var(--tg-theme-hint-color)', fontSize: 14 }}>
-          Освещённость {illuminationPct}% · до полнолуния {data!.daysUntilFull} дн.
+          Освещённость {illuminationPct}% · до полнолуния {data.daysUntilFull} дн.
         </p>
       </div>
 
@@ -47,16 +50,16 @@ export function LunarPage() {
         background: 'var(--tg-theme-secondary-bg-color)',
         borderRadius: 12, padding: '14px 16px', marginBottom: 20
       }}>
-        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{data!.tip}</p>
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{data.tip}</p>
       </div>
 
       {/* Рекомендации */}
       <Section title="Свечи сегодня">
-        <TagRow items={data!.recommendations.candles} onClick={() => navigate('/pick')} />
+        <TagRow items={data.recommendations.candles} onClick={() => navigate('/pick')} />
       </Section>
 
       <Section title="Намерения">
-        <TagRow items={data!.recommendations.intentions} onClick={() => navigate('/pick')} />
+        <TagRow items={data.recommendations.intentions} onClick={() => navigate('/pick')} />
       </Section>
 
       {/* CTA подбора */}
@@ -104,6 +107,27 @@ function PageLoader() {
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center',
       height: '60vh', color: 'var(--tg-theme-hint-color)', fontSize: 14 }}>
       Загрузка...
+    </div>
+  )
+}
+
+function ErrorScreen() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center',
+      alignItems: 'center', height: '60vh', padding: 24, textAlign: 'center',
+      color: 'var(--tg-theme-text-color)' }}>
+      <div style={{ fontSize: 48, marginBottom: 16 }}>🌙</div>
+      <p style={{ fontSize: 16, marginBottom: 8 }}>Не удалось загрузить данные</p>
+      <p style={{ fontSize: 13, color: 'var(--tg-theme-hint-color)', marginBottom: 24, maxWidth: 260 }}>
+        Сервер просыпается — подождите немного и обновите страницу
+      </p>
+      <button
+        onClick={() => window.location.reload()}
+        style={{ padding: '10px 24px', borderRadius: 10, border: 'none',
+          background: 'var(--tg-theme-button-color)', color: 'var(--tg-theme-button-text-color)',
+          fontSize: 15, cursor: 'pointer' }}>
+        Обновить
+      </button>
     </div>
   )
 }
