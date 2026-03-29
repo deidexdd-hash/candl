@@ -13,8 +13,9 @@ const TIER_NAMES: Record<string, { label: string; emoji: string; desc: string }>
 export function ProfilePage() {
   const navigate  = useNavigate()
   const api       = useApi()
-  const user      = useAuthStore(s => s.user)
+  const user       = useAuthStore(s => s.user)
   const updateTier = useAuthStore(s => s.updateTier)
+  const logout     = useAuthStore(s => s.logout)
 
   const [code,    setCode]    = useState('')
   const [status,  setStatus]  = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
@@ -146,6 +147,19 @@ export function ProfilePage() {
           Оформить подписку
         </button>
       )}
+
+      <button
+        onClick={() => { logout(); window.location.reload() }}
+        style={s({
+          width: '100%', padding: '13px 0', borderRadius: 10, border: 'none',
+          background: 'transparent',
+          color: 'var(--tg-theme-destructive-text-color, #e53935)',
+          fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
+          marginTop: 4,
+        })}
+      >
+        Сбросить сессию
+      </button>
     </div>
   )
 }

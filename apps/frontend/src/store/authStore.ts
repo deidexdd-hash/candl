@@ -26,7 +26,10 @@ export const useAuthStore = create<AuthStore>()(
       isNew: false,
       login: (token, user) => set({ token, user, isNew: (user as any).isNew ?? false }),
       updateTier: (tier) => set(s => ({ user: s.user ? { ...s.user, tier } : null })),
-      logout: () => set({ token: null, user: null }),
+      logout: () => {
+        localStorage.removeItem('auth')
+        set({ token: null, user: null })
+      },
     }),
     { name: 'auth' }
   )
