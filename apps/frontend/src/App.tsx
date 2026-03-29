@@ -11,6 +11,7 @@ import { LibraryPage }    from './pages/LibraryPage'
 import { DiaryPage }      from './pages/DiaryPage'
 import { ProfilePage }    from './pages/ProfilePage'
 import { PaywallPage }    from './pages/PaywallPage'
+import { AdminPage }      from './pages/AdminPage'
 import { TabBar }         from './components/TabBar'
 
 const queryClient = new QueryClient({
@@ -159,6 +160,7 @@ function AppInner() {
           <Route path="/diary"       element={<DiaryPage />} />
           <Route path="/profile"     element={<ProfilePage />} />
           <Route path="/paywall"     element={<PaywallPage />} />
+          <Route path="/admin"       element={<AdminPage />} />
           <Route path="*"            element={<LunarPage />} />
         </Routes>
       </div>

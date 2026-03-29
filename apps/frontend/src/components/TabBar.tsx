@@ -1,16 +1,22 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useAuthStore } from '../store/authStore'
 
-const TABS = [
-  { path: '/lunar',   label: 'Луна',      icon: '🌙' },
-  { path: '/pick',    label: 'Подбор',    icon: '🕯' },
-  { path: '/library', label: 'Книга',     icon: '📖' },
-  { path: '/diary',   label: 'Дневник',   icon: '✍️' },
-  { path: '/profile', label: 'Профиль',   icon: '👤' },
+const BASE_TABS = [
+  { path: '/lunar',   label: 'Луна',    icon: '🌙' },
+  { path: '/pick',    label: 'Подбор',  icon: '🕯' },
+  { path: '/library', label: 'Книга',   icon: '📖' },
+  { path: '/diary',   label: 'Дневник', icon: '✍️' },
+  { path: '/profile', label: 'Профиль', icon: '👤' },
 ]
 
+const ADMIN_TAB = { path: '/admin', label: 'Панель', icon: '⚙️' }
+
 export function TabBar() {
-  const navigate = useNavigate()
+  const navigate     = useNavigate()
   const { pathname } = useLocation()
+  const user         = useAuthStore(s => s.user)
+
+  const tabs = user?.isAdmin ? [...BASE_TABS, ADMIN_TAB] : BASE_TABS
 
   return (
     <nav style={{
@@ -19,7 +25,7 @@ export function TabBar() {
       background: 'var(--tg-theme-bg-color)',
       paddingBottom: 'env(safe-area-inset-bottom)',
     }}>
-      {TABS.map(tab => {
+      {tabs.map(tab => {
         const active = pathname.startsWith(tab.path)
         return (
           <button

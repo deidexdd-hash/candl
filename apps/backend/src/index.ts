@@ -11,6 +11,7 @@ import { lunarRoutes, notificationsRoutes, diaryRoutes } from './routes/lunar'
 import { paymentsRoutes }   from './routes/payments'
 import { adminRoutes }      from './routes/admin'
 import { accessCodeRoutes } from './routes/accessCode'
+import { panelRoutes }      from './routes/panel'
 import { startLunarCron }   from './services/lunarService'
 import { setupBot }         from './services/botSetup'
 
@@ -51,6 +52,7 @@ async function main() {
   await app.register(paymentsRoutes,      { prefix })
   await app.register(adminRoutes,         { prefix })
   await app.register(accessCodeRoutes,    { prefix })
+  await app.register(panelRoutes,         { prefix })
 
   startLunarCron()
 

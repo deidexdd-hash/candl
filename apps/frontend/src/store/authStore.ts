@@ -6,6 +6,7 @@ interface User {
   telegramId: string
   firstName: string | null
   tier: 'free' | 'practitioner' | 'master' | 'annual'
+  isAdmin?: boolean
 }
 
 interface AuthStore {

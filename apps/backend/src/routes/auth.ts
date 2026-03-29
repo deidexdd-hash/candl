@@ -63,6 +63,7 @@ export async function authRoutes(app: FastifyInstance) {
         tier:       dbUser.tier,
         isNew,
         isTestUser: testUser,
+        isAdmin:    testUser, // Админы = тест-пользователи из TEST_USER_IDS
       },
     }
   })
