@@ -37,6 +37,9 @@ export async function panelRoutes(app: FastifyInstance) {
     }
   })
 
+  // ── Ping: проверка доступа (используется фронтендом для верификации) ─────
+  app.get('/panel/ping', async () => ({ ok: true }))
+
   // ── Создать один код ──────────────────────────────────────────────────────
   app.post('/panel/codes', async (request, reply) => {
     const body = createSchema.parse(request.body)

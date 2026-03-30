@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useApi } from '../hooks/useTier'
 import { useAuthStore } from '../store/authStore'
 
@@ -31,15 +32,41 @@ const TIER_COLOR: Record<Tier, string> = {
 }
 
 export function AdminPage() {
-  const user = useAuthStore(s => s.user)
-  const api  = useApi()
-  const [tab, setTab] = useState<Tab>('create')
+  const user     = useAuthStore(s => s.user)
+  const navigate = useNavigate()
+  const api      = useApi()
+  const [tab, setTab]           = useState<Tab>('create')
+  const [verified, setVerified] = useState<boolean | null>(null)
 
-  if (!user?.isAdmin) {
+  // Двойная проверка: store + сервер (защита от подделки localStorage)
+  useEffect(() => {
+    if (!user?.isAdmin) { setVerified(false); return }
+    api.get<{ ok: boolean }>('/panel/ping').then(() => setVerified(true)).catch(() => setVerified(false))
+  }, [user?.isAdmin])
+
+  if (!user?.isAdmin || verified === false) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center',
-        height: '60vh', color: 'var(--tg-theme-hint-color)', fontSize: 14 }}>
-        Нет доступа
+      <div style={{
+        display: 'flex', flexDirection: 'column', justifyContent: 'center',
+        alignItems: 'center', height: '60vh', gap: 12,
+        color: 'var(--tg-theme-hint-color)',
+      }}>
+        <span style={{ fontSize: 32 }}>🔒</span>
+        <span style={{ fontSize: 14 }}>Нет доступа</span>
+        <button onClick={() => navigate('/lunar')} style={{
+          marginTop: 8, padding: '8px 20px', borderRadius: 10, border: 'none',
+          background: 'var(--tg-theme-button-color)',
+          color: 'var(--tg-theme-button-text-color)',
+          fontSize: 14, cursor: 'pointer', fontFamily: 'inherit',
+        }}>На главную</button>
+      </div>
+    )
+  }
+
+  if (verified === null) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+        <span style={{ fontSize: 13, color: 'var(--tg-theme-hint-color)' }}>Проверка доступа...</span>
       </div>
     )
   }

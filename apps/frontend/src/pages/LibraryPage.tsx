@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useApi } from '../hooks/useTier'
 import { ChapterRenderer } from '../components/ChapterRenderer'
+import { useTier } from '../hooks/useTier'
 import type { ChapterSection } from '../components/ChapterRenderer'
 
 interface Chapter {
@@ -138,13 +139,14 @@ function ChapterView({ id }: { id: string }) {
   const api      = useApi()
   const navigate = useNavigate()
 
+  // Backend enforces tier gating — 403 TIER_REQUIRED → redirect to paywall
   const { data, error, isLoading } = useQuery<{ chapter: Chapter }>({
     queryKey: ['chapter', id],
     queryFn:  () => api.get(`/content/chapters/${id}`),
     retry:    false,
   })
 
-  if ((error as any)?.code === 'TIER_REQUIRED') {
+  if ((error as any)?.code === 'TIER_REQUIRED' || (error as any)?.status === 403) {
     navigate('/paywall')
     return null
   }
