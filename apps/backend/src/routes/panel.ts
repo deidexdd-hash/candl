@@ -29,10 +29,19 @@ const batchSchema = z.object({
 
 export async function panelRoutes(app: FastifyInstance) {
 
-  // preHandler запускается ПОСЛЕ jwtVerify — request.user уже заполнен
+  // ── Шаг 1: верифицируем JWT для ВСЕХ panel-маршрутов ─────────────────────
+  app.addHook('onRequest', async (request, reply) => {
+    try {
+      await request.jwtVerify()
+    } catch {
+      return reply.code(401).send({ error: 'Unauthorized', code: 'UNAUTHORIZED', statusCode: 401 })
+    }
+  })
+
+  // ── Шаг 2: проверяем права администратора ────────────────────────────────
   app.addHook('preHandler', async (request, reply) => {
-    const { telegramId } = request.user as { telegramId?: string }
-    if (!telegramId || !isAdmin(telegramId)) {
+    const user = request.user as { telegramId?: string } | null
+    if (!user?.telegramId || !isAdmin(user.telegramId)) {
       return reply.code(403).send({ error: 'Forbidden', code: 'FORBIDDEN' })
     }
   })
