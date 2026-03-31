@@ -148,7 +148,7 @@ export async function assistantRoutes(app: FastifyInstance) {
     if (geminiClient) {
       try {
         const model = geminiClient.getGenerativeModel({
-          model: 'gemini-1.5-flash',
+          model: 'gemini-2.5-flash',
           safetySettings: [
             { category: HarmCategory.HARM_CATEGORY_HARASSMENT,        threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
             { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,       threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
