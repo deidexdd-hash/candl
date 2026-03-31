@@ -114,7 +114,7 @@ export async function panelRoutes(app: FastifyInstance) {
     ])
 
     return {
-      users: byTier.map(r => ({ tier: r.tier, count: r._count.id })),
+      users: byTier.map((r: any) => ({ tier: r.tier, count: r._count.id })),
       codes: { total: totalCodes, used: usedCodes, available: totalCodes - usedCodes },
     }
   })
