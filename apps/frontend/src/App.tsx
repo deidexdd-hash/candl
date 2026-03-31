@@ -188,6 +188,11 @@ async function refreshTierInBackground(initData: string) {
   try {
     const { user } = await doAuth(initData)
     useAuthStore.getState().updateTier(user.tier)
+    // Обновляем isAdmin — важно для отображения панели администратора
+    useAuthStore.getState().login(
+      useAuthStore.getState().token!,
+      user
+    )
   } catch {
     // тихо — не мешаем пользователю
   }
