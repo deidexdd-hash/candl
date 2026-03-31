@@ -29,8 +29,8 @@ const batchSchema = z.object({
 
 export async function panelRoutes(app: FastifyInstance) {
 
-  // Middleware — проверяем isAdmin на все /panel/* роуты
-  app.addHook('onRequest', async (request, reply) => {
+  // preHandler запускается ПОСЛЕ jwtVerify — request.user уже заполнен
+  app.addHook('preHandler', async (request, reply) => {
     const { telegramId } = request.user as { telegramId?: string }
     if (!telegramId || !isAdmin(telegramId)) {
       return reply.code(403).send({ error: 'Forbidden', code: 'FORBIDDEN' })
