@@ -32,7 +32,6 @@ async function main() {
     ]
     if (publicRoutes.includes(request.url)) return
     if (request.url.startsWith('/v1/admin')) return
-    if (request.url.startsWith('/v1/panel')) return
 
     try {
       await request.jwtVerify()
