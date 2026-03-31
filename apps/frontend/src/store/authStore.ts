@@ -18,6 +18,10 @@ interface AuthStore {
   logout: () => void
 }
 
+// Версия схемы — увеличивай при изменении структуры User
+// чтобы старый localStorage не ломал приложение
+const STORE_VERSION = 2
+
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set) => ({
@@ -31,6 +35,10 @@ export const useAuthStore = create<AuthStore>()(
         set({ token: null, user: null })
       },
     }),
-    { name: 'auth' }
+    {
+      name: 'auth',
+      version: STORE_VERSION,
+      migrate: () => ({ token: null, user: null, isNew: false }),
+    }
   )
 )

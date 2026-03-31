@@ -3,17 +3,18 @@ import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
 import { PrismaClient } from '@prisma/client'
 
-import { authRoutes }       from './routes/auth'
-import { userRoutes }       from './routes/users'
-import { contentRoutes }    from './routes/content'
-import { candleRoutes }     from './routes/candle'
+import { authRoutes }        from './routes/auth'
+import { userRoutes }        from './routes/users'
+import { contentRoutes }     from './routes/content'
+import { candleRoutes }      from './routes/candle'
 import { lunarRoutes, notificationsRoutes, diaryRoutes } from './routes/lunar'
-import { paymentsRoutes }   from './routes/payments'
-import { adminRoutes }      from './routes/admin'
-import { accessCodeRoutes } from './routes/accessCode'
-import { panelRoutes }      from './routes/panel'
-import { startLunarCron }   from './services/lunarService'
-import { setupBot }         from './services/botSetup'
+import { paymentsRoutes }    from './routes/payments'
+import { adminRoutes }       from './routes/admin'
+import { accessCodeRoutes }  from './routes/accessCode'
+import { panelRoutes }       from './routes/panel'
+import { assistantRoutes }   from './routes/assistant'   // ← был импортирован но не зарегистрирован
+import { startLunarCron }    from './services/lunarService'
+import { setupBot }          from './services/botSetup'
 
 export const prisma = new PrismaClient()
 
@@ -29,9 +30,7 @@ async function main() {
       '/v1/payments/stars/webhook',
       '/v1/payments/stripe/webhook',
     ]
-    // Публичные роуты — без JWT
     if (publicRoutes.includes(request.url)) return
-    // Админ-роуты защищены своим заголовком, не JWT
     if (request.url.startsWith('/v1/admin')) return
 
     try {
@@ -53,6 +52,7 @@ async function main() {
   await app.register(adminRoutes,         { prefix })
   await app.register(accessCodeRoutes,    { prefix })
   await app.register(panelRoutes,         { prefix })
+  await app.register(assistantRoutes,     { prefix })   // ← добавлена регистрация
 
   startLunarCron()
 
