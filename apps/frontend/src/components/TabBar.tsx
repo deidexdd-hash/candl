@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
+import { useTier } from '../hooks/useTier'
 
 const BASE_TABS = [
   { path: '/lunar',   label: 'Луна',    icon: '🌙' },
@@ -9,14 +10,22 @@ const BASE_TABS = [
   { path: '/profile', label: 'Профиль', icon: '👤' },
 ]
 
-const ADMIN_TAB = { path: '/admin', label: 'Панель', icon: '⚙️' }
+const ASSISTANT_TAB = { path: '/assistant', label: 'Советник', icon: '🔮' }
+const ADMIN_TAB     = { path: '/admin',     label: 'Панель',   icon: '⚙️' }
 
 export function TabBar() {
   const navigate     = useNavigate()
   const { pathname } = useLocation()
   const user         = useAuthStore(s => s.user)
+  const { isPractitioner } = useTier()
 
-  const tabs = user?.isAdmin ? [...BASE_TABS, ADMIN_TAB] : BASE_TABS
+  // Базовые + Советник (Практик+) + Панель (Админ)
+  let tabs = [...BASE_TABS]
+  if (isPractitioner) {
+    // Вставляем Советника перед Профилем
+    tabs.splice(tabs.length - 1, 0, ASSISTANT_TAB)
+  }
+  if (user?.isAdmin) tabs.push(ADMIN_TAB)
 
   return (
     <nav style={{
@@ -44,10 +53,13 @@ export function TabBar() {
               color: active ? 'var(--tg-theme-button-color)' : 'var(--tg-theme-hint-color)',
               fontSize: 10,
               fontFamily: 'inherit',
+              minWidth: 0,
             }}
           >
-            <span style={{ fontSize: 20 }}>{tab.icon}</span>
-            <span>{tab.label}</span>
+            <span style={{ fontSize: tabs.length > 5 ? 18 : 20 }}>{tab.icon}</span>
+            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%', paddingInline: 2 }}>
+              {tab.label}
+            </span>
           </button>
         )
       })}
