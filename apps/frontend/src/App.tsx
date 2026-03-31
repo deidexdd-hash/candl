@@ -12,6 +12,7 @@ import { DiaryPage }      from './pages/DiaryPage'
 import { ProfilePage }    from './pages/ProfilePage'
 import { PaywallPage }    from './pages/PaywallPage'
 import { AdminPage }      from './pages/AdminPage'
+import { AssistantPage }  from './pages/AssistantPage'
 import { TabBar }         from './components/TabBar'
 
 const queryClient = new QueryClient({
@@ -61,14 +62,14 @@ function LoadingScreen({ slow }: { slow: boolean }) {
     <div style={{
       display: 'flex', flexDirection: 'column', justifyContent: 'center',
       alignItems: 'center', height: '100vh',
-      background: 'var(--tg-theme-bg-color, #fff)',
+      background: '#0d0a06',
     }}>
-      <div style={{ fontSize: 48, marginBottom: 16 }}>🕯</div>
-      <p style={{ fontSize: 15, color: 'var(--tg-theme-text-color, #000)', marginBottom: 8 }}>
+      <div style={{ fontSize: 52, marginBottom: 16 }}>🕯</div>
+      <p style={{ fontSize: 15, color: '#f5dfa0', marginBottom: 8, fontWeight: 500 }}>
         {slow ? 'Сервер просыпается...' : 'Загрузка...'}
       </p>
       {slow && (
-        <p style={{ fontSize: 13, color: 'var(--tg-theme-hint-color)', maxWidth: 260, textAlign: 'center' }}>
+        <p style={{ fontSize: 13, color: 'rgba(245,223,160,0.55)', maxWidth: 260, textAlign: 'center' }}>
           Первый запуск может занять до 30 секунд
         </p>
       )}
@@ -107,6 +108,7 @@ function AppInner() {
     if (!initData) {
       navigate('/onboarding')
       setLoading(false)
+      ;(window as any).__hideSplash?.()
       return
     }
 
@@ -114,6 +116,7 @@ function AppInner() {
     // тихо обновляем tier в фоне
     if (token) {
       setLoading(false)
+      ;(window as any).__hideSplash?.()
       refreshTierInBackground(initData)
       return
     }
@@ -125,6 +128,7 @@ function AppInner() {
     const bailTimer = setTimeout(() => {
       clearTimeout(slowTimer)
       setLoading(false)
+      ;(window as any).__hideSplash?.()
       navigate('/onboarding')
     }, 25000)
 
@@ -140,6 +144,7 @@ function AppInner() {
         clearTimeout(bailTimer)
         setSlow(false)
         setLoading(false)
+        ;(window as any).__hideSplash?.()
       })
   }, [])
 
@@ -161,6 +166,7 @@ function AppInner() {
           <Route path="/profile"     element={<ProfilePage />} />
           <Route path="/paywall"     element={<PaywallPage />} />
           <Route path="/admin"       element={<AdminPage />} />
+          <Route path="/assistant"   element={<AssistantPage />} />
           <Route path="*"            element={<LunarPage />} />
         </Routes>
       </div>
@@ -186,6 +192,11 @@ async function refreshTierInBackground(initData: string) {
   try {
     const { user } = await doAuth(initData)
     useAuthStore.getState().updateTier(user.tier)
+    // Обновляем isAdmin — важно для отображения панели администратора
+    useAuthStore.getState().login(
+      useAuthStore.getState().token!,
+      user
+    )
   } catch {
     // тихо — не мешаем пользователю
   }

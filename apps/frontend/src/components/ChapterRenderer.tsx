@@ -430,11 +430,24 @@ function SectionTableInline({ section }: { section: ChapterSection }) {
 
 function SectionVisual({ section }: { section: ChapterSection }) {
   if (!section.visual_svg) return null
+
+  // Strip any hardcoded background from the SVG root so our container controls it
+  const cleanSvg = section.visual_svg.replace(
+    /(<svg[^>]*?)background:[^;'"]+;?/g,
+    '$1'
+  )
+
   return (
     <div style={{ margin: '20px 0' }}>
       <div
-        style={{ width: '100%', borderRadius: 12, overflow: 'hidden' }}
-        dangerouslySetInnerHTML={{ __html: section.visual_svg }}
+        style={{
+          width: '100%',
+          borderRadius: 12,
+          overflow: 'hidden',
+          background: 'var(--tg-theme-secondary-bg-color, #f5f0e8)',
+          boxShadow: '0 1px 8px rgba(0,0,0,0.08)',
+        }}
+        dangerouslySetInnerHTML={{ __html: cleanSvg }}
       />
       {section.caption && (
         <div style={{
@@ -443,6 +456,7 @@ function SectionVisual({ section }: { section: ChapterSection }) {
           color: 'var(--tg-theme-hint-color)',
           marginTop: 8,
           lineHeight: 1.4,
+          fontStyle: 'italic',
         }}>
           {section.caption}
         </div>
