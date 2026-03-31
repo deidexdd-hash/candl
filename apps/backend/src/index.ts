@@ -13,6 +13,7 @@ import { adminRoutes }      from './routes/admin'
 import { accessCodeRoutes } from './routes/accessCode'
 import { panelRoutes }      from './routes/panel'
 import { startLunarCron }   from './services/lunarService'
+import { assistantRoutes }  from './routes/assistant'
 import { setupBot }         from './services/botSetup'
 
 export const prisma = new PrismaClient()
