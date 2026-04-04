@@ -3,7 +3,6 @@ import SunCalc from 'suncalc'
 import TelegramBot from 'node-telegram-bot-api'
 import { prisma } from '../index'
 
-// Bot инициализируется лениво, чтобы не падать при старте если BOT_TOKEN не задан
 function getBot(): TelegramBot | null {
   const token = process.env.BOT_TOKEN
   if (!token) return null
@@ -16,49 +15,116 @@ export type MoonPhase =
   | 'new_moon' | 'waxing_crescent' | 'first_quarter' | 'waxing_gibbous'
   | 'full_moon' | 'waning_gibbous' | 'last_quarter' | 'waning_crescent'
 
+// ─── ИСПРАВЛЕНО: реалистичные полосы фаз ────────────────────────────────────
+// SunCalc.phase: 0 = новолуние, 0.5 = полнолуние, 1 = новолуние
+// Каждая переходная фаза (четверть) занимает ~1.5 дня = ~5% цикла
+// Остальные фазы равномерно делят оставшиеся ~88%
 export function getMoonPhase(date: Date): MoonPhase {
   const { phase } = SunCalc.getMoonIllumination(date)
-  if (phase < 0.025 || phase >= 0.975) return 'new_moon'
-  if (phase < 0.25)  return 'waxing_crescent'
-  if (phase < 0.275) return 'first_quarter'
-  if (phase < 0.5)   return 'waxing_gibbous'
-  if (phase < 0.525) return 'full_moon'
-  if (phase < 0.75)  return 'waning_gibbous'
-  if (phase < 0.775) return 'last_quarter'
-  return 'waning_crescent'
+  if (phase < 0.033 || phase >= 0.967) return 'new_moon'        // ~2 дня
+  if (phase < 0.22)                    return 'waxing_crescent'  // ~5.5 дней
+  if (phase < 0.30)                    return 'first_quarter'    // ~2.5 дня
+  if (phase < 0.47)                    return 'waxing_gibbous'   // ~5 дней
+  if (phase < 0.53)                    return 'full_moon'        // ~2 дня
+  if (phase < 0.72)                    return 'waning_gibbous'   // ~5.5 дней
+  if (phase < 0.80)                    return 'last_quarter'     // ~2.5 дня
+  return 'waning_crescent'                                       // ~5 дней
 }
 
 export function getMoonPhaseRu(phase: MoonPhase): string {
   const map: Record<MoonPhase, string> = {
-    new_moon: 'Новолуние', waxing_crescent: 'Растущий серп',
-    first_quarter: 'Первая четверть', waxing_gibbous: 'Растущая Луна',
-    full_moon: 'Полнолуние', waning_gibbous: 'Убывающая Луна',
-    last_quarter: 'Последняя четверть', waning_crescent: 'Убывающий серп',
+    new_moon:        'Новолуние',
+    waxing_crescent: 'Растущий серп',
+    first_quarter:   'Первая четверть',
+    waxing_gibbous:  'Растущая Луна',
+    full_moon:       'Полнолуние',
+    waning_gibbous:  'Убывающая Луна',
+    last_quarter:    'Последняя четверть',
+    waning_crescent: 'Убывающий серп',
   }
   return map[phase]
 }
 
+// ─── ИСПРАВЛЕНО: советы соответствуют традиционной логике ───────────────────
 const PHASE_TIPS: Record<MoonPhase, string> = {
-  new_moon:        'Время сеять намерения. Зажгите чёрную или белую свечу, медитируйте, записывайте новые цели.',
-  waxing_crescent: 'Луна набирает силу — начинайте новые дела. Подходят зелёные и розовые свечи.',
-  first_quarter:   'Преодолевайте препятствия. Оранжевая или жёлтая свеча даст энергию действия.',
-  waxing_gibbous:  'Активное время притяжения. Зажигайте зелёные, золотые, розовые свечи.',
-  full_moon:       'Пик силы. Самое мощное время для ритуалов. Белая или серебристая свеча.',
-  waning_gibbous:  'Начинайте отпускать лишнее. Серая или синяя свеча помогут.',
-  last_quarter:    'Время очищения и прощения. Чёрная свеча — для завершения старого.',
-  waning_crescent: 'Глубокое очищение. Дайте себе отдых перед новым циклом.',
+  new_moon:
+    'Время посева намерений. Луна невидима — энергия обращена внутрь. ' +
+    'Медитируйте, записывайте цели. Зажгите белую или серебряную свечу. ' +
+    'Сейчас не время начинать внешние действия — только внутренний посев.',
+
+  waxing_crescent:
+    'Луна начинает расти — пора делать первые шаги. ' +
+    'Начинайте новые дела, делайте первые звонки и встречи. ' +
+    'Зелёная или оранжевая свеча поддержат движение и рост.',
+
+  first_quarter:
+    'Луна на полпути к полнолунию — и путь не всегда прост. ' +
+    'Это время сопротивления и выбора: продолжать или отступить. ' +
+    'Оранжевая или красная свеча даст решимость преодолеть препятствия.',
+
+  waxing_gibbous:
+    'Лучшее время для практик притяжения — энергия на подъёме перед кульминацией. ' +
+    'Зажигайте зелёные и золотые свечи для денег, розовые — для любви. ' +
+    'Намерения, поставленные сейчас, достигнут пика на полнолуние.',
+
+  full_moon:
+    'Кульминация цикла. Не время начинать новое — время завершать и благодарить. ' +
+    'Заряжайте кристаллы под лунным светом, выражайте благодарность. ' +
+    'Белая или серебряная свеча. Эмоции сейчас обострены — важные решения отложите.',
+
+  waning_gibbous:
+    'Луна начинает убывать — время отпускать то, что больше не служит. ' +
+    'Работайте с избавлением от вредных привычек, токсичных паттернов и обид. ' +
+    'Синяя или серая свеча поможет мягко расстаться с лишним.',
+
+  last_quarter:
+    'Время глубокого прощения и принятия. Что вы готовы отпустить навсегда? ' +
+    'Серая или синяя свеча — для мягкого завершения. ' +
+    'Чёрная — только если нужна серьёзная работа с тенью или завершение тяжёлого.',
+
+  waning_crescent:
+    'Луна почти невидима — время тишины и восстановления. ' +
+    'Отдыхайте, наблюдайте за снами, подводите итоги цикла. ' +
+    'Белая или серебряная свеча. Сейчас не время для активных ритуалов — только покой.',
 }
 
+// ─── ИСПРАВЛЕНО: рекомендации согласованы с логикой фаз ─────────────────────
 const RECOMMENDATIONS: Record<MoonPhase, { candles: string[]; intentions: string[] }> = {
-  new_moon:        { candles: ['Чёрная', 'Белая', 'Тёмно-синяя'],  intentions: ['Новые начала', 'Планирование', 'Медитация'] },
-  waxing_crescent: { candles: ['Зелёная', 'Розовая', 'Оранжевая'], intentions: ['Рост', 'Привлечение', 'Здоровье'] },
-  first_quarter:   { candles: ['Оранжевая', 'Жёлтая', 'Красная'],  intentions: ['Действие', 'Преодоление', 'Карьера'] },
-  waxing_gibbous:  { candles: ['Зелёная', 'Золотая', 'Розовая'],   intentions: ['Деньги', 'Любовь', 'Изобилие'] },
-  full_moon:       { candles: ['Белая', 'Серебристая', 'Золотая'],  intentions: ['Любовь', 'Успех', 'Ответы'] },
-  waning_gibbous:  { candles: ['Серая', 'Синяя', 'Чёрная'],        intentions: ['Отпускание', 'Исцеление', 'Очищение'] },
-  last_quarter:    { candles: ['Чёрная', 'Серая', 'Синяя'],        intentions: ['Завершение', 'Прощение', 'Карма'] },
-  waning_crescent: { candles: ['Чёрная', 'Белая', 'Серебристая'],  intentions: ['Отдых', 'Подготовка', 'Сны'] },
+  new_moon: {
+    candles:    ['Белая', 'Серебряная', 'Тёмно-синяя'],
+    intentions: ['Намерения', 'Медитация', 'Планирование'],
+  },
+  waxing_crescent: {
+    candles:    ['Зелёная', 'Оранжевая', 'Розовая'],
+    intentions: ['Новые начала', 'Привлечение', 'Рост'],
+  },
+  first_quarter: {
+    candles:    ['Оранжевая', 'Красная', 'Жёлтая'],
+    intentions: ['Действие', 'Преодоление', 'Смелость'],
+  },
+  waxing_gibbous: {
+    candles:    ['Зелёная', 'Золотая', 'Розовая'],
+    intentions: ['Деньги', 'Любовь', 'Изобилие'],
+  },
+  full_moon: {
+    candles:    ['Белая', 'Серебряная', 'Золотая'],
+    intentions: ['Благодарность', 'Завершение', 'Манифестация'],
+  },
+  waning_gibbous: {
+    candles:    ['Синяя', 'Серая', 'Белая'],
+    intentions: ['Отпускание', 'Исцеление', 'Очищение'],
+  },
+  last_quarter: {
+    candles:    ['Серая', 'Синяя', 'Чёрная'],
+    intentions: ['Прощение', 'Завершение', 'Принятие'],
+  },
+  waning_crescent: {
+    candles:    ['Белая', 'Серебряная', 'Синяя'],
+    intentions: ['Покой', 'Сны', 'Восстановление'],
+  },
 }
+
+// ─── Уведомления и cron (без изменений) ──────────────────────────────────────
 
 interface NotificationWithUser {
   user: { telegramId: bigint; tier: string }
@@ -113,8 +179,6 @@ export function startLunarCron() {
   cron.schedule('0 * * * *', async () => {
     try {
       const phase = getMoonPhase(new Date())
-
-      // Читаем последнюю фазу из БД (CronState) вместо Redis
       const cronState = await prisma.cronState.findUnique({ where: { key: 'lunar:last_phase' } })
       const lastPhase = cronState?.value ?? null
 
@@ -138,16 +202,17 @@ export function startLunarCron() {
 }
 
 export function getLunarToday() {
-  const now = new Date()
-  const phase = getMoonPhase(now)
+  const now          = new Date()
+  const phase        = getMoonPhase(now)
   const illumination = SunCalc.getMoonIllumination(now)
+  // Дни до полнолуния: phase 0.5 = полнолуние
   const daysUntilFull = Math.round(((0.5 - illumination.phase + 1) % 1) * 29.53)
   return {
     phase,
-    phaseRu: getMoonPhaseRu(phase),
-    illumination: Math.round(illumination.fraction * 100) / 100,
+    phaseRu:         getMoonPhaseRu(phase),
+    illumination:    Math.round(illumination.fraction * 100) / 100,
     daysUntilFull,
-    tip: PHASE_TIPS[phase],
+    tip:             PHASE_TIPS[phase],
     recommendations: RECOMMENDATIONS[phase],
   }
 }
