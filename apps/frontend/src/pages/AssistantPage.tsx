@@ -125,8 +125,10 @@ export function AssistantPage() {
   const [usage,     setUsage]     = useState<UsageInfo | null>(null)
   const [error,     setError]     = useState('')
 
-  const limit = TIER_LIMITS[tier] ?? 0
-  if (limit === 0) return <LockedScreen />
+  // Админ имеет доступ независимо от тарифа
+  const isAdmin = user?.isAdmin ?? false
+  const limit = isAdmin ? 999 : (TIER_LIMITS[tier] ?? 0)
+  if (limit === 0 && !isAdmin) return <LockedScreen />
 
   // Загрузить usage при маунте
   useEffect(() => {
@@ -178,6 +180,7 @@ export function AssistantPage() {
   }
 
   const availablePresets = PRESETS.filter(p =>
+    isAdmin ||
     p.tier === 'all' ||
     (p.tier === 'practitioner' && (tier === 'practitioner' || tier === 'master' || tier === 'annual')) ||
     (p.tier === 'master' && (tier === 'master' || tier === 'annual'))
@@ -200,10 +203,10 @@ export function AssistantPage() {
           <div>
             <div style={{ fontSize: 16, fontWeight: 700 }}>🔮 Помощник</div>
             <div style={{ fontSize: 11, color: 'var(--tg-theme-hint-color)', marginTop: 2 }}>
-              {TIER_LABEL[tier] ?? tier} · {remainingText}
+              {isAdmin ? 'Администратор' : (TIER_LABEL[tier] ?? tier)} · {remainingText}
             </div>
           </div>
-          {usage && (
+          {usage && !isAdmin && (
             <div style={{
               width: 36, height: 36, borderRadius: 18,
               background: 'var(--tg-theme-secondary-bg-color)',

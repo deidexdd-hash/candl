@@ -39,7 +39,7 @@ export function BackHeader({ title, to, onBack, right }: BackHeaderProps) {
         WebApp.BackButton.offClick(handleBack)
       }
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [handleBack]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div style={{
@@ -65,8 +65,8 @@ export function BackHeader({ title, to, onBack, right }: BackHeaderProps) {
           fontFamily: 'inherit',
           // Скрываем в Telegram — там есть нативная кнопка
           // Оставляем для web-preview и отладки
-          opacity:    WebApp.platform === 'unknown' ? 1 : 0,
-          pointerEvents: WebApp.platform === 'unknown' ? 'auto' : 'none',
+          opacity:    WebApp.platform === 'unknown' ? 1 : 1,
+          pointerEvents: 'auto',
         }}
         aria-label="Назад"
       >
