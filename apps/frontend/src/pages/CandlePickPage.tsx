@@ -37,10 +37,11 @@ export function CandlePickPage() {
   const navigate = useNavigate()
   const { isFree } = useTier()
 
-  const { mutate, isPending } = useMutation({
+  const { mutate, isPending, error } = useMutation({
     mutationFn: (int: string) => api.post<PickResult>('/candle/pick', { intention: int }),
     onSuccess:  setResult,
     onError:    (err: any) => {
+      console.error('Candle pick error:', err)
       if (err.code === 'PAYMENT_REQUIRED') navigate('/paywall')
     },
   })
@@ -54,6 +55,8 @@ export function CandlePickPage() {
       />
     )
   }
+
+  const canSubmit = intention.trim() && !isPending
 
   return (
     <div style={{ color: 'var(--tg-theme-text-color)' }}>
@@ -103,20 +106,32 @@ export function CandlePickPage() {
           }}
         />
 
-        {isFree && (
+        {error && (
+          <p style={{ fontSize: 12, color: '#ff4444', margin: '6px 0 0' }}>
+            Ошибка: {(error as any).message || 'Не удалось подобрать свечу'}
+          </p>
+        )}
+
+        {isFree && !error && (
           <p style={{ fontSize: 12, color: 'var(--tg-theme-hint-color)', margin: '6px 0 0' }}>
             Бесплатно: 3 подбора в день
           </p>
         )}
 
         <button
-          onClick={() => intention.trim() && mutate(intention.trim())}
-          disabled={!intention.trim() || isPending}
+          onClick={() => {
+            const trimmed = intention.trim()
+            if (trimmed) {
+              console.log('Submitting intention:', trimmed)
+              mutate(trimmed)
+            }
+          }}
+          disabled={!canSubmit}
           style={{
             width: '100%', padding: '13px 0', borderRadius: 10, border: 'none', marginTop: 16,
-            background: intention.trim() ? 'var(--tg-theme-button-color)' : 'var(--tg-theme-hint-color)',
+            background: canSubmit ? 'var(--tg-theme-button-color)' : 'var(--tg-theme-hint-color)',
             color: 'var(--tg-theme-button-text-color)', fontSize: 16, fontWeight: 500,
-            cursor: intention.trim() ? 'pointer' : 'default', fontFamily: 'inherit',
+            cursor: canSubmit ? 'pointer' : 'default', fontFamily: 'inherit',
           }}
         >
           {isPending ? '🕯 Подбираю...' : 'Подобрать свечу'}
