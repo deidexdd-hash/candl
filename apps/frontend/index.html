@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0d0a06" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
     <title>Язык Пламени</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
@@ -16,6 +19,12 @@
         -webkit-tap-highlight-color: transparent;
       }
       #root { height: 100dvh; overflow: hidden; }
+      /* iOS Safari momentum scroll */
+      * { -webkit-overflow-scrolling: touch; }
+      /* Убрать iOS callout на долгом тапе */
+      button, a { -webkit-touch-callout: none; }
+      /* Запрет выделения текста в UI элементах */
+      button { -webkit-user-select: none; user-select: none; }
 
       /* ── SPLASH ─────────────────────────────────────────── */
       #splash {

@@ -453,7 +453,7 @@ function Label({ children }: { children: React.ReactNode }) {
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '12px 14px', borderRadius: 10, border: 'none',
   background: 'var(--tg-theme-secondary-bg-color)', color: 'var(--tg-theme-text-color)',
-  fontSize: 15, fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 16,
+  fontSize: 16, fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 16,
   outline: 'none',
 }
 

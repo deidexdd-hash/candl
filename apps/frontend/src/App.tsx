@@ -31,7 +31,7 @@ class ErrorBoundary extends Component<
       return (
         <div style={{
           display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          alignItems: 'center', height: '100vh', padding: 24, textAlign: 'center',
+          alignItems: 'center', height: '100dvh', padding: 24, textAlign: 'center',
           background: 'var(--tg-theme-bg-color, #fff)',
           color: 'var(--tg-theme-text-color, #000)',
         }}>
@@ -61,7 +61,7 @@ function LoadingScreen({ slow }: { slow: boolean }) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', justifyContent: 'center',
-      alignItems: 'center', height: '100vh',
+      alignItems: 'center', height: '100dvh',
       background: '#0d0a06',
     }}>
       <div style={{ fontSize: 52, marginBottom: 16 }}>🕯</div>
@@ -154,8 +154,8 @@ function AppInner() {
   if (loading) return <LoadingScreen slow={slow} />
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh' }}>
+      <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
         <Routes>
           <Route path="/onboarding"  element={<OnboardingPage />} />
           <Route path="/lunar"       element={<LunarPage />} />

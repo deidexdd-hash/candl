@@ -170,7 +170,7 @@ function NewEntryForm({ onSave, onCancel, saving }: NewEntryFormProps) {
               type="date" value={date}
               onChange={e => setDate(e.target.value)}
               style={s({
-                width: '100%', padding: '11px 14px', borderRadius: 10, fontSize: 15,
+                width: '100%', padding: '11px 14px', borderRadius: 10, fontSize: 16,
                 border: '1px solid var(--tg-theme-hint-color)',
                 background: 'var(--tg-theme-secondary-bg-color)',
                 color: 'var(--tg-theme-text-color)', boxSizing: 'border-box' as const,
@@ -192,7 +192,7 @@ function NewEntryForm({ onSave, onCancel, saving }: NewEntryFormProps) {
               rows={4}
               placeholder="Я открыта к финансовому потоку и принимаю изобилие с благодарностью"
               style={s({
-                width: '100%', padding: '11px 14px', borderRadius: 10, fontSize: 14,
+                width: '100%', padding: '11px 14px', borderRadius: 10, fontSize: 16,
                 border: '1px solid var(--tg-theme-hint-color)', resize: 'none' as const,
                 background: 'var(--tg-theme-secondary-bg-color)',
                 color: 'var(--tg-theme-text-color)', boxSizing: 'border-box' as const,
@@ -296,7 +296,7 @@ function NewEntryForm({ onSave, onCancel, saving }: NewEntryFormProps) {
               rows={5}
               placeholder="Через 3 дня получила предложение о новом проекте. Пламя горело ровно — знак принятого намерения."
               style={s({
-                width: '100%', padding: '11px 14px', borderRadius: 10, fontSize: 14,
+                width: '100%', padding: '11px 14px', borderRadius: 10, fontSize: 16,
                 border: '1px solid var(--tg-theme-hint-color)', resize: 'none' as const,
                 background: 'var(--tg-theme-secondary-bg-color)',
                 color: 'var(--tg-theme-text-color)', boxSizing: 'border-box' as const,

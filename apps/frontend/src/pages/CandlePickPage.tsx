@@ -97,7 +97,7 @@ export function CandlePickPage() {
             width: '100%', minHeight: 80, padding: '10px 12px', borderRadius: 10,
             border: '1px solid var(--tg-theme-hint-color)',
             background: 'var(--tg-theme-secondary-bg-color)',
-            color: 'var(--tg-theme-text-color)', fontSize: 14,
+            color: 'var(--tg-theme-text-color)', fontSize: 16,
             fontFamily: 'inherit', resize: 'none', boxSizing: 'border-box',
             lineHeight: 1.5,
           }}

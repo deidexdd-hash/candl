@@ -185,7 +185,7 @@ export function AssistantPage() {
 
   return (
     <div style={{
-      display: 'flex', flexDirection: 'column', height: '100vh',
+      display: 'flex', flexDirection: 'column', height: '100dvh',
       color: 'var(--tg-theme-text-color)',
     }}>
 
@@ -217,7 +217,7 @@ export function AssistantPage() {
       </div>
 
       {/* Чат */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 8px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '16px 16px 8px' }}>
 
         {/* Приветствие + пресеты */}
         {messages.length === 0 && (
@@ -334,9 +334,9 @@ export function AssistantPage() {
               flex: 1, padding: '10px 14px', borderRadius: 20,
               border: '1px solid var(--tg-theme-secondary-bg-color)',
               background: 'var(--tg-theme-secondary-bg-color)',
-              color: 'var(--tg-theme-text-color)', fontSize: 14,
+              color: 'var(--tg-theme-text-color)', fontSize: 16,
               resize: 'none', fontFamily: 'inherit', lineHeight: 1.5,
-              outline: 'none', maxHeight: 100, overflowY: 'auto',
+              outline: 'none', maxHeight: 120, overflowY: 'auto',
             }}
           />
           <button

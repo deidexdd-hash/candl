@@ -384,7 +384,7 @@ export function OnboardingPage() {
 
   return (
     <div style={{
-      display: 'flex', flexDirection: 'column', height: '100vh',
+      display: 'flex', flexDirection: 'column', height: '100dvh',
       color: 'var(--tg-theme-text-color)',
       boxSizing: 'border-box',
     }}>
